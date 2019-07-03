@@ -6,6 +6,16 @@ library(ggplot2)
 # Other things other than normal data -- Can do once students can draw their own curves
 #######  Actual App ###################################################################
 shinyServer(function(input, output, session) {
+  observeEvent(input$info,{
+    sendSweetAlert(
+      session = session,
+      title = "Instructions:",
+      text = "Move each slider to observe what happens to the boxplot.
+Then, increase the number of simulations and observe the Distribution of P-values and how they are affected by each slider.
+After you have sufficiently experimented with the different sliders, move on to the game and test your knowledge!",
+      type = "info"
+    )
+  })
   #Go to overview Button
   observeEvent(input$goover, {
     updateTabItems(session, "tabs", "overview")

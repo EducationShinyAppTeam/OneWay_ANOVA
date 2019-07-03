@@ -2,10 +2,39 @@ library(shiny)
 library(shinydashboard)
 library(shinyBS)
 library(shinyDND)
+library(shiny)
+library(shinydashboard)
+library(png)
+library(shinyBS)
+library(V8)
+library(shinyjs)
+library(shinyWidgets)
+sliderInput2 <- function(inputId, label, min, max, value, step=NULL, from_min, from_max){
+  x <- sliderInput(inputId, label, min, max, value, step)
+  x$children[[2]]$attribs <- c(x$children[[2]]$attribs, 
+                               "data-from-min" = from_min, 
+                               "data-from-max" = from_max 
+                               )
+  x
+}
 
+sliderInput3 <- function(inputId, label, min, max, value, step=NULL, from_min, from_max){
+  x <- sliderInput(inputId, label, min, max, value, step, animate=TRUE)
+  x$children[[2]]$attribs <- c(x$children[[2]]$attribs, 
+                               "data-from-min" = from_min, 
+                               "data-from-max" = from_max 
+  )
+  x
+}
 
+header = dashboardHeader(title = "One-Way ANOVA",
+                             tags$li(class= "dropdown",
+                                     tags$a(href='https://shinyapps.science.psu.edu/',
+                                            icon("home",lib = "font-awesome"))),
+                             tags$li(class="dropdown",
+                                        actionLink("info", icon("info"), class = "myClass"))
 
-header = dashboardHeader(title = "One-Way ANOVA")
+                         )
 
 sidebar = dashboardSidebar(
   
@@ -18,7 +47,6 @@ sidebar = dashboardSidebar(
              menuSubItem("Fill in the Blank", tabName = "game2", icon = icon("gamepad")))
   )
 )
-
 
 body = dashboardBody(
   tags$head(
@@ -35,7 +63,7 @@ body = dashboardBody(
                  which is compared to the F distribution with (number of groups – 1) = 2 numerator degrees of freedom and the (sample size – number of groups) = N-3 denominator degrees of freedom.")),
             
             br(),
-            div(style = "text-align: center",bsButton("goover", "Go to the overview", icon("bolt"), size = "large"))
+            div(style = "text-align: center",bsButton("goover", "Go to the overview", icon("bolt"), size = "large", class="circle grow"))
             ),
     tabItem(tabName = "overview",
             tags$a(href='http://stat.psu.edu/',tags$img(src='PS-HOR-RGB-2C.png', align = "left", width = 180)),
@@ -49,16 +77,16 @@ body = dashboardBody(
             h4(tags$li("Then, increase the number of simulations and observe the Distribution of P-values and how they are affected by each slider.")),
             h4(tags$li("After you have sufficiently experimented with the different sliders, move on to the game and test your knowledge!")),
             
-            div(style = "text-align: center",bsButton("explore", "Explore", icon("bolt"), size = "large")),
+            div(style = "text-align: center",bsButton("explore", "Explore", icon("bolt"), size = "large", class="circle grow")),
             br(),
             h3(tags$b("Acknowledgements:")),
             h4(p("This app was developed and coded by Alex Chen.  Special thanks to Jinglin Feng for being my partner in this project and Yuxin Zhang for the format of the Matching games."))
             ),
     
     tabItem(tabName = "app",
-            div(style="display: inline-block;vertical-align:top;",
-                tags$a(href='https://shinyapps.science.psu.edu/',tags$img(src='homebut.PNG', width = 15))
-            ),
+            # div(style="display: inline-block;vertical-align:top;",
+            #     tags$a(href='https://shinyapps.science.psu.edu/',tags$img(src='homebut.PNG', width = 15))
+            # ),
             h3("ANOVA Test Simulator"),
             sidebarLayout(
               sidebarPanel(
@@ -76,13 +104,13 @@ body = dashboardBody(
                 bsPopover("mu3", "Group Mean 3", "True Mean for 3rd Group"),
                 sliderInput('sigma', 'Standard Deviation \\(\\sigma\\)', min = 0, max = 10, value = 1, step = .1),
                 bsPopover("sigma", "Standard Deviation", "Common standard deviation within group"),
-                sliderInput('n', 'Sample size(\\(n\\)) ', min = 2, max = 100, value = 30, step = 1),
+                sliderInput2('n', 'Sample size(\\(n\\)) ', min = 0, max = 100, value = 30, step = 1, from_min = 2, from_max = 100),
                 bsPopover("n", "# of Samples", "Sample Size per group"),
-                sliderInput('sim', 'Number of Simulations', min = 1, max = 1000, value = 30, animate = TRUE),
+                sliderInput3('sim', 'Number of Simulations', min = 0, max = 1000, value = 30, step = 1, from_min = 1,from_max = 1000),
                 bsPopover("sim", "Simulations", "Number of Simulations with above conditions"),
                 
                 br(),
-                div(style = "text-align: center",bsButton("gogame", "Go to the Games", icon("bolt"), size = "large"))
+                div(style = "text-align: center",bsButton("gogame", "Go to the Games", icon("bolt"), size = "large", class="circle grow"))
                 
                 #h3("Critical F Value")
                 #verbatimTextOutput('Fcrit'),
@@ -101,8 +129,7 @@ body = dashboardBody(
               )
             )
             ),
-    # tabItem(tabName = "game",
-    #         h3("Matching Game")),
+
     tabItem(tabName = "game1",
             div(style="display: inline-block;vertical-align:top;",
                 tags$a(href='https://shinyapps.science.psu.edu/',tags$img(src='homebut.PNG', width = 15))
@@ -120,9 +147,8 @@ body = dashboardBody(
                          h3(p("Match each picture to the corresponding group means given in each box")),
                          h3(p("At the top of each game, there will be parameters being held constant")),
                          h3(p("If needed, go back to the app and play around with the variables to try and recreate the images")),
-                         fluidRow(column(1, offset = 5, bsButton("go1", "G O !", icon("bolt"), size = "large")))
+                         fluidRow(column(1, offset = 5, actionButton("go1", "G O !", icon("bolt"), size = "large", class="circle grow")))
                        )
-                       
               ),
               #level 1
               tabPanel(title = h5("Level 1"), value = "l1",
@@ -180,7 +206,6 @@ body = dashboardBody(
                                         div(style = "text-align:center",
                                             bsButton("submit2", "Submit!"),
                                             bsButton("next1", "Next>>",disabled = F))
-                                        
                        )
               ),
               #level 2
@@ -426,7 +451,7 @@ body = dashboardBody(
                              h3(p("Hint: There is more than one answer to each statement")),
                              
                              #fluidRow(column(3, offset = 9, textOutput("timer2"))),
-                             fluidRow(column(1, offset = 5, bsButton("go2", "G O !", icon("bolt"), size = "large")))
+                             fluidRow(column(1, offset = 5, bsButton("go2", "G O !", icon("bolt"), size = "large", class="circle grow")))
                              
                            )
                            
