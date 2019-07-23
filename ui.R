@@ -80,7 +80,7 @@ body = dashboardBody(
             div(style = "text-align: center",bsButton("explore", "Explore", icon("bolt"), size = "large", class="circle grow")),
             br(),
             h3(tags$b("Acknowledgements:")),
-            h4(p("This app was developed and coded by Alex Chen.  Special thanks to Jinglin Feng for being my partner in this project and Yuxin Zhang for the format of the Matching games."))
+            h4(p("This app was developed and coded by Alex Chen and improved by Yiyang Wang.  Special thanks to Jinglin Feng for being my partner in this project and Yuxin Zhang for the format of the Matching games."))
             ),
     
     tabItem(tabName = "app",
@@ -112,10 +112,6 @@ body = dashboardBody(
                 br(),
                 div(style = "text-align: center",bsButton("gogame", "Go to the Games", icon("bolt"), size = "large", class="circle grow"))
                 
-                #h3("Critical F Value")
-                #verbatimTextOutput('Fcrit'),
-                #bsPopover("Fcrit", "Critical F Value", "Critical F Value for 1 Simulation")
-                # plotOutput('Fdist')
               ),
               
               mainPanel(
