@@ -10,9 +10,7 @@ shinyServer(function(input, output, session) {
     sendSweetAlert(
       session = session,
       title = "Instructions:",
-      text = "Move each slider to observe what happens to the boxplot.
-Then, increase the number of simulations and observe the Distribution of P-values and how they are affected by each slider.
-After you have sufficiently experimented with the different sliders, move on to the game and test your knowledge!",
+      text = "This app is designed to explore how a one-way ANOVA behaves under differing samples sizes and null and alternative hypotheses. The app includes a matching game to test student understanding of the issues illustrated by the app.",
       type = "info"
     )
   })
