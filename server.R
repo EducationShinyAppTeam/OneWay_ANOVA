@@ -1,22 +1,29 @@
 library(shiny)
 library(ggplot2)
+library(shinyWidgets)
 
-# Add in plot interaction with ggplot
-# Include better boxplot -- Done
-# Other things other than normal data -- Can do once students can draw their own curves
-#######  Actual App ###################################################################
-shinyServer(function(input, output, session) {
+function(input, output, session) {
+  # color palette
+  boastPalette <- c("#0072B2","#D55E00","#009E73","#CE77A8",
+                    "#000000","#E69F00","#999999","#56B4E9","#CC79A7")
+  psuPalette <- c("#1E407C","#BC204B","#3EA39E","#E98300",
+                  "#999999","#AC8DCE","#F2665E","#99CC00")
+  # information icon
   observeEvent(input$info,{
     sendSweetAlert(
       session = session,
-      title = "Instructions:",
-      text = "This app is designed to explore how a one-way ANOVA behaves under differing samples sizes and null and alternative hypotheses. The app includes a matching game to test student understanding of the issues illustrated by the app.",
+      title = "Information:",
+      text = "This app is designed to explore how a one-way ANOVA behaves under 
+      differing samples sizes and null and alternative hypotheses. The app includes
+      a matching game to test student understanding of the issues illustrated by 
+      the app.",
       type = "info"
     )
   })
+  
   #Go to overview Button
   observeEvent(input$goover, {
-    updateTabItems(session, "tabs", "overview")
+    updateTabItems(session, "tabs", "pre")
   })
   #Explore Button
   observeEvent(input$explore, {
@@ -36,23 +43,23 @@ shinyServer(function(input, output, session) {
     )
   })
   
-  #Creates the BoxPlot *Need to make a ggplot of this to make more interactive*
+  # Creates the BoxPlot *Need to make a ggplot of this to make more interactive*
   output$aovPlot = renderPlot({
     value = gen_data()
     df = data.frame(y = c(rnorm(value[1], value[2], value[5]), 
                           rnorm(value[1], value[3], value[5]), 
                           rnorm(value[1], value[4], value[5])),
                     group = rep(sprintf('Group %s', 1:3), each = value[1]))
-    ggplot(data = df, aes(x = df$group, y = df$y)) + 
-      geom_boxplot(data = df, aes(x = df$group, y = df$y)) + 
-      geom_point(data = df, aes(x = df$group, y = df$y)) +
+    ggplot(data = df, aes(x = group, y = y)) + 
+      geom_boxplot( aes(x = group, y = y)) + 
+      geom_point(aes(group, y = y)) +
       ggtitle("Example Data by Groups") + ylab("Values") + xlab("") +
     theme(plot.title = element_text(hjust = 0.5, size = 24),
           text = element_text(size = 18))
       
   })
   
-  #Summary of the data
+  # Summary of the data
   output$aovSummary = renderPrint({
     value = gen_data()
     df = data.frame(`y` = c(rnorm(value[1], value[2], value[5]), 
@@ -63,7 +70,7 @@ shinyServer(function(input, output, session) {
     summary(aov(y ~ Group, data = df))
   })
   
-  #Displays the F Crit Value
+  # Displays the F Crit Value
   output$Fcrit = renderPrint({
     value = gen_data()
     df = data.frame(y = c(rnorm(value[1], value[2], value[5]), 
@@ -74,22 +81,10 @@ shinyServer(function(input, output, session) {
     dfsum = summary(aov(df$y ~ df$group))
     qf(0.95, df1 = dfsum[[1]]$Df[1], dfsum[[1]]$Df[2])
   })
-  # output$Fdist = renderPlot({
-  #   value = gen_data()
-  #   df = data.frame(y = c(rnorm(value[1], value[2], value[5]), 
-  #                         rnorm(value[1], value[3], value[5]), 
-  #                         rnorm(value[1], value[4], value[5])),
-  #                   group = rep(sprintf('mu%s', 1:3), each = value[1]))
-  #   dfsum = summary(aov(df$y ~ df$group))
-  #   df1 = dfsum[[1]]$Df[1]
-  #   df2 = dfsum[[1]]$Df[2]
-  #   curve(df(x, df1 = df1, df2 = df2), from = 0, to = 100, xLab = "F-statistic
-  #         ")# Add in ability to repeat same sample. P-value distribution changes
-  # })
   
-  #Makes number of simulations into a reactive variable
+  # Makes number of simulations into a reactive variable
   counter = reactive(input$sim)
-  #Creates the P-value plot through the number of simulations
+  # Creates the P-value plot through the number of simulations
   output$pvalueplot = renderPlot({
     simulations = counter()
     vector = c()
@@ -105,17 +100,26 @@ shinyServer(function(input, output, session) {
       pvalue = dfsum[[1]]$`Pr(>F)`[1]
       vector = c(vector, pvalue)
     }
-    hist(vector, main = paste("P-Value Distribution for", input$sim, "Simulations"), 
-         xlab = "P-value", xlim = range(0,1), font.lab = 2, font = 2, col = "lightblue")
-    
+    ggplot(data = data.frame(x = vector), aes(x = x)) +
+      geom_histogram(
+        binwidth = 0.1,
+        boundary = 0,
+        closed = "left",
+        col = "black",
+        fill = psuPalette[3],
+        na.rm = TRUE) +
+      labs(
+        title = paste("P-Value Distribution for", input$sim, "Simulations"), 
+        x = "p-value",
+        y = "Frequency") + 
+      theme_bw() +
+      theme(
+        plot.caption = element_text(size = 18),
+        text = element_text(size = 18),
+        axis.title = element_text(size = 16))
   })
-  # Different types(not just normal) of populations
-  # Boxplot from ggplot
-  # Be able to select points and see where they are on the box plot
   
-  
-  ###########################################################################################################
-  ######################## Matching #########################################################################
+  ######################## Matching ##################################
   time<-reactiveValues(inc=0, timer=reactiveTimer(1000), started=F)
   
   observeEvent(input$go, {time$started<-T})
@@ -436,55 +440,67 @@ observeEvent(input$next5, {
   updateTabItems(session, "tabs", selected = "game2")
 })
   
-  ###########################################################################################################
-  ######################## Fill in the Blank ################################################################
+  ######################## Fill in the Blank ##################################
   
 #observeEvent(input$go2, {  
   output$first = renderText({
     if(input$firstans == '' && input$secondans == ''){
-      paste("1. When the group means are ____1____, having a larger standard deviation ____2____ have an effect on the distribution of p-values")
+      paste("1. When the group means are ____1____, having a larger standard",
+      "deviation ____2____ have an effect on the distribution of p-values")
     }
     else if(input$firstans == ''){
-      paste("1. When the group means are ____1____, having a larger standard deviation", input$secondans, "have an effect on the distribution of p-values")
+      paste("1. When the group means are ____1____, having a larger standard deviation",
+            input$secondans, "have an effect on the distribution of p-values")
     }
     
     else if(input$secondans == ''){
-      paste("1. When the group means are", input$firstans, ", having a larger standard deviation ____2____ have effect on the distribution of p-values")
+      paste("1. When the group means are", input$firstans, ", having a larger",
+      "standard deviation ____2____ have effect on the distribution of p-values")
     }
     else{
-      paste("1. When the group means are", input$firstans, ", having a larger standard deviation", input$secondans ," have effect on the distribution of p-values")
+      paste("1. When the group means are", input$firstans, 
+            ", having a larger standard deviation", input$secondans ,
+            " have effect on the distribution of p-values")
     }
   })
   
   output$second = renderText({
     if(input$thirdans == '' && input$fourthans == ''){
-      paste("2. The Distribution of P-values, under the alternative hypothesis is more ____3____ as the number of Samples ____4____")
+      paste("2. The Distribution of P-values, under the alternative hypothesis",
+      "is more ____3____ as the number of Samples ____4____")
     }
     else if(input$thirdans == ''){
-      paste("2. The Distribution of P-values, under the alternative hypothesis is more ____3____ as the number of Samples", input$fourthans)
+      paste("2. The Distribution of P-values, under the alternative hypothesis",
+      "is more ____3____ as the number of Samples", input$fourthans)
     }
     
     else if(input$fourthans == ''){
-      paste("2. The Distribution of P-values, under the alternative hypothesis is more", input$thirdans, "as the number of Samples ____4____")
+      paste("2. The Distribution of P-values, under the alternative hypothesis",
+      "is more", input$thirdans, "as the number of Samples ____4____")
     }
     else{
-      paste("2. The Distribution of P-values, under the alternative hypothesis is more", input$thirdans, "as the number of Samples", input$fourthans)
+      paste("2. The Distribution of P-values, under the alternative hypothesis",
+      "is more", input$thirdans, "as the number of Samples", input$fourthans)
     }
   })
   
   output$third = renderText({
     if(input$fifthans == '' && input$sixthans == ''){
-      paste("3. As the differences between the three means ____5____ the P-Value histogram becomes more ____6____ skewed")
+      paste("3. As the differences between the three means ____5____ the P-Value",
+      "histogram becomes more ____6____ skewed")
     }
     else if(input$fifthans == ''){
-      paste("3. As the differences between the three means ____5____ the P-Value histogram becomes more", input$sixthans, "skewed")
+      paste("3. As the differences between the three means ____5____ the P-Value",
+      "histogram becomes more", input$sixthans, "skewed")
     }
     
     else if(input$fourthans == ''){
-      paste("3. As the differences between the three means", input$fifthans, "the P-Value histogram becomes more ____6____ skewed")
+      paste("3. As the differences between the three means", input$fifthans, 
+            "the P-Value histogram becomes more ____6____ skewed")
     }
     else{
-      paste("3. As the differences between the three means", input$fifthans, "the P-Value histogram becomes more", input$sixthans, "skewed")
+      paste("3. As the differences between the three means", input$fifthans, 
+            "the P-Value histogram becomes more", input$sixthans, "skewed")
     }
   })
   
@@ -492,13 +508,13 @@ observeEvent(input$next5, {
     if((input$firstans == "different" & input$secondans == "will") || 
        (input$firstans == "equal" && input$secondans == "won't")){
       output$ans1 = renderUI({
-        img(src = "check.png", width = 75)
+        img(src = "check.png", width = 45)
       })
     }
     else
       {
       output$ans1 = renderUI({
-        img(src = "cross.png", width = 75)
+        img(src = "cross.png", width = 45)
       })
     }
     
@@ -508,12 +524,12 @@ observeEvent(input$next5, {
     if((input$thirdans == "Skewed" && input$fourthans == "Increases") ||
        (input$thirdans == "Level" && input$fourthans == "Decreases")){
       output$ans2 = renderUI({
-        img(src = "check.png", width = 75)
+        img(src = "check.png", width = 45)
       })
     }
     else{
       output$ans2 = renderUI({
-        img(src = "cross.png", width = 75)
+        img(src = "cross.png", width = 45)
       })
     }
   })
@@ -522,15 +538,15 @@ observeEvent(input$next5, {
     if((input$fifthans == "Increases" && input$sixthans == "Right") ||
        input$fifthans == "Decreases" && input$sixthans == "Left"){
       output$ans3 = renderUI({
-        img(src = "check.png", width = 75)
+        img(src = "check.png", width = 45)
       })
     }
     else{
       output$ans3 = renderUI({
-        img(src = "cross.png", width = 75)
+        img(src = "cross.png", width = 45)
       })
     }
   })
 #})
   
-})
+}
