@@ -917,7 +917,7 @@ server <- function(input, output, session) {
             rnorm(value[1], value[3], value[5]),
             rnorm(value[1], value[4], value[5])
       ),
-      group <- rep(sprintf('Group %s', 1:3), each = value[1])
+      group = rep(sprintf('Group %s', 1:3), each = value[1])
     )
 
     ### Make plot ----
